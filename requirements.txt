@@ -1,0 +1,4 @@
+aiopg
+aiohttp
+opentelemetry-exporter-jaeger
+opentelemetry-instrumentation-aiopg
