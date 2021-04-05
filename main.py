@@ -3,19 +3,25 @@ import asyncio
 from aiohttp import web
 import aiopg
 from opentelemetry import trace
-from opentelemetry.exporter import jaeger
+from opentelemetry.exporter.jaeger.thrift import JaegerExporter
+from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchExportSpanProcessor
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.instrumentation.aiopg import AiopgInstrumentor
 
-jaeger_exporter = jaeger.JaegerSpanExporter(
-        service_name="test", agent_host_name="127.0.0.1", agent_port=5775
-    )
-
-trace_provider = TracerProvider()
-trace_provider.add_span_processor(BatchExportSpanProcessor(jaeger_exporter))
+trace_provider = TracerProvider(resource=Resource.create({SERVICE_NAME: "my-service"}))
 trace.set_tracer_provider(trace_provider)
 tracer = trace.get_tracer(__name__)
+
+
+
+
+jaeger_exporter = JaegerExporter(
+        agent_host_name="127.0.0.1", agent_port=5775
+    )
+span_processor = BatchSpanProcessor(jaeger_exporter)
+
+trace.get_tracer_provider().add_span_processor(span_processor)
 
 AiopgInstrumentor().instrument()
 
